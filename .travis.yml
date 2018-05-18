@@ -102,10 +102,8 @@ matrix:
         - memcached
         - redis-server
         - postgresql
-      before_install:
-        - source ~/virtualenv/python2.7/bin/activate
       install:
-        - pip install -e ".[dev,tests,optional]"
+        - python2 -m pip install --user -e ".[dev,tests,optional]"
         - wget -N "http://chromedriver.storage.googleapis.com/$(curl https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip" -P ~/
         - unzip ~/chromedriver_linux64.zip -d ~/
         - rm ~/chromedriver_linux64.zip
@@ -115,10 +113,8 @@ matrix:
 
     - language: node_js
       env: TEST_SUITE=js
-      before_install:
-        - source ~/virtualenv/python2.7/bin/activate
       install:
-        - pip install $(cat requirements*.txt | grep -E 'click|pycodestyle')
+        - python2 -m pip install --user $(cat requirements*.txt | grep -E 'click|pycodestyle')
 
     - python: 2.7
       env: TEST_SUITE=cli
