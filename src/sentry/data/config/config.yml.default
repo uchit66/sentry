@@ -62,11 +62,13 @@ redis.clusters:
 ################
 
 # Uploaded media uses these `filestore` settings. The available
-# backends are either `filesystem` or `s3`.
+# backends are `filesystem`, `s3`, or `gcs`.
 
 filestore.backend: 'filesystem'
 filestore.options:
   location: '/tmp/sentry-files'
+
+# TODO (josh): add gcs commented usage
 
 # filestore.backend: 's3'
 # filestore.options:
