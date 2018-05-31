@@ -68,8 +68,8 @@ class ProjectForm(forms.Form):
 
 
 class VstsIntegration(Integration):
-    def get_client(self):
-        return VstsApiClient()
+    def get_client(self, access_token):
+        return VstsApiClient(access_token)
 
 
 class VstsIntegrationProvider(IntegrationProvider):
@@ -78,6 +78,7 @@ class VstsIntegrationProvider(IntegrationProvider):
     metadata = metadata
     domain = '.visualstudio.com'
     api_version = '4.1'
+    integration_cls = VstsIntegration
 
     setup_dialog_config = {
         'width': 600,
