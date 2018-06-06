@@ -16,6 +16,7 @@ from .exceptions import (
     ApiHostError, ApiError, ApiUnauthorized, IntegrationError, UnsupportedResponseType
 )
 from .constants import ERR_UNAUTHORIZED, ERR_INTERNAL, ERR_UNSUPPORTED_RESPONSE_TYPE
+from sentry.models import Identity, OrganizationIntegration
 
 IntegrationMetadata = namedtuple('IntegrationMetadata', [
     'description',  # A markdown description of the integration
@@ -72,6 +73,8 @@ class IntegrationProvider(PipelineProvider):
     # can the integration be enabled specifically for projects?
     can_add_project = False
 
+    needs_default_identity = False
+
     # can be any number of IntegrationFeatures
     features = frozenset()
 
@@ -79,6 +82,9 @@ class IntegrationProvider(PipelineProvider):
     def get_installation(cls, model, **kwargs):
         if cls.integration_cls is None:
             raise NotImplementedError
+
+        if cls.needs_default_identity is True and 'organization' not in kwargs:
+            raise NotImplementedError('%s requires an organization' % cls.name)
 
         return cls.integration_cls(model, **kwargs)
 
@@ -150,8 +156,9 @@ class Integration(object):
 
     logger = logging.getLogger('sentry.integrations')
 
-    def __init__(self, model):
+    def __init__(self, model, organization_id=None):
         self.model = model
+        self.organization_id = organization_id
 
     def get_organization_config(self):
         """
@@ -173,6 +180,27 @@ class Integration(object):
     def get_client(self):
         # Return the api client for a given provider
         raise NotImplementedError
+
+    def get_default_identity(self):
+        """
+        For Integrations that rely solely on user auth for authentication
+        """
+        if self.organization_id is None:
+            raise NotImplementedError
+
+        try:
+            org_integration = OrganizationIntegration.objects.get(
+                organization_id=self.organization_id,
+                integration_id=self.model.id,
+            )
+        except OrganizationIntegration.DoesNotExist as e:
+            raise e
+        try:
+            identity = Identity.objects.get(id=org_integration.default_auth_id)
+        except Identity.DoesNotExist as e:
+            raise e
+
+        return identity
 
     def error_message_from_json(self, data):
         return data.get('message', 'unknown error')
